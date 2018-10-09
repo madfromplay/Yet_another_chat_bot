@@ -114,6 +114,13 @@ def about(message):
                                       " userID, chatID, and count messages in different ways.")
 
 
+@app.message_handler(commands=['help'])
+def help(message):
+    app.send_message(message.chat.id, "List of possible commands:\n"
+                                  "/start - Turns on message processing and statistic collection\n"
+                                  "/about - Disclamer\n"
+                                  "/stats - prints message statistic")
+
 @app.message_handler(commands=['start'])
 def start(message):
     result = chats.find_one({"chat_id": message.chat.id})
@@ -136,6 +143,7 @@ def stats(message):
 @app.message_handler(func=lambda message: True, content_types=['text'])
 def general_handler(message):
     update_user(message)
+
 
 if __name__ == '__main__':
     polling_thread = threading.Thread(target=bot_polling, args=(app,))
