@@ -48,7 +48,6 @@ class Statistic:
         return user["username"]
 
     def exhume_stats(self):
-        print ("exhuming statistic")
         result = chats.find({"chat_id": self.chat_id}, {"users": 1, "_id": 0})
         try:
             self.user_list = dict(result[0])["users"]
@@ -71,19 +70,21 @@ connection = MongoClient(config.db.address)
 db = connection[config.db.name]
 chats = db[config.db.collection]
 app = TeleBot(config.bot.token)
-apihelper.proxy = {'https': 'socks5h://telegram:telegram@lullt.teletype.live:1080'}
+if hasattr(config.bot, "proxy"):
+    print ("starting with proxy")
+    apihelper.proxy = {'https': 'socks5h://'+config.bot.proxy}
 
 
 def bot_polling(app):
-    crush_count = 0
+    crash_count = 0
     while True:
         try:
             print("bot started")
             app.polling(none_stop=True)
         except Exception as e:
-            crush_count += 1
+            crash_count += 1
             print(e)
-            print(crush_count, "crush detected, will take a brief")
+            print(crash_count, "crush detected, will take a brief")
             time.sleep(15)
             print("restarting...")
 
@@ -121,6 +122,7 @@ def show_help(message):
                                       "/about - Disclaimer\n"
                                       "/stats - prints message statistic")
 
+
 @app.message_handler(commands=['start'])
 def start(message):
     result = chats.find_one({"chat_id": message.chat.id})
@@ -140,7 +142,7 @@ def stats(message):
     app.send_message(message.chat.id, statistic_instance.message)
 
 
-@app.message_handler(func=lambda message: True, content_types=['text'])
+@app.message_handler(func=lambda message: True, content_types=['text','new_chat_participant'])
 def general_handler(message):
     update_user(message)
 
