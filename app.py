@@ -28,9 +28,13 @@ class Statistic:
     """instance of statistic for current chat"""
     def __init__(self, chat_id):
         self.chat_id = chat_id
-        self.exhume_stats()
-        self.stats = None
         self.message = str()
+        self.user_list = list()
+        self.stats = None
+        self.exhume_stats()
+
+
+
 
     def fix_username(self, user): # die fucktards without username!
         try:
@@ -46,17 +50,18 @@ class Statistic:
         return user["username"]
 
     def exhume_stats(self):
+        print ("exhuming statistic")
         result = chats.find({"chat_id": self.chat_id}, {"users": 1, "_id": 0})
-        user_list = list()
         try:
-            user_list = dict(result[0])["users"]
+            self.user_list = dict(result[0])["users"]
         except:
             pass
 
-        self.stats = (sorted(user_list, key=lambda k: k['message_count']))
+        self.stats = (sorted(self.user_list, key=lambda k: k['message_count']))
         self.prepare_message()
 
     def prepare_message(self):
+        self.message = str()
         for item in self.stats:
             self.message = self.message + self.fix_username(item) + " -- " + str(item["message_count"]) + "\n"
 
