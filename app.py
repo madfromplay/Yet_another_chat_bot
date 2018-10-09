@@ -1,3 +1,4 @@
+from datetime import datetime
 from telebot import TeleBot, apihelper
 from pymongo import MongoClient
 from configparser import ConfigParser
@@ -68,10 +69,11 @@ class Statistic:
 config = Conf("config.ini")
 connection = MongoClient(config.db.address)
 db = connection[config.db.name]
-chats = db[config.db.collection]
+chats = db[config.db.chats]
+reminders = db[config.db.reminders]
 app = TeleBot(config.bot.token)
 if hasattr(config.bot, "proxy"):
-    print ("starting with proxy")
+    print("starting with proxy")
     apihelper.proxy = {'https': 'socks5h://'+config.bot.proxy}
 
 
@@ -87,6 +89,34 @@ def bot_polling(app):
             print(crash_count, "crush detected, will take a brief")
             time.sleep(15)
             print("restarting...")
+
+
+def create_reminder(chat_id, period, time, text):
+    reminders.insert_one(
+        {
+            "chat_id": chat_id,
+            "period": period,
+            "time": time,
+            "text": text
+        }
+    )
+
+
+def rem():
+    while True:
+        reminders_list = list()
+        result = reminders.find({})
+
+        for item in result:
+            reminders_list.append(item)
+
+        for item in reminders_list:
+            now = datetime.now()
+            if now.strftime("%H:%M") == item["time"]:
+                print("sending notification")
+                app.send_message(item["chat_id"], item["text"])
+
+        time.sleep(10)
 
 
 def update_user(message):
@@ -134,6 +164,7 @@ def start(message):
             "chat_id": message.chat.id,
             "users": []
         })
+        app.send_message("Stats collection enabled")
 
 
 @app.message_handler(commands=['stats'])
@@ -142,11 +173,20 @@ def stats(message):
     app.send_message(message.chat.id, statistic_instance.message)
 
 
+@app.message_handler(commands=['set_reminder'])
+def set_reminder(message):
+    args = message.text.split()[1:]
+    text = ' '.join(message.text.split()[3:])
+    create_reminder(message.chat.id, args[0], args[1], text)
+
+
 @app.message_handler(func=lambda message: True, content_types=['text','new_chat_participant'])
-def general_handler(message):
+def common_message(message):
     update_user(message)
 
 
 if __name__ == '__main__':
     polling_thread = threading.Thread(target=bot_polling, args=(app,))
     polling_thread.start()
+    reminder_thread = threading.Thread(target=rem)
+    reminder_thread.start()
