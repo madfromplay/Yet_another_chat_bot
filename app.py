@@ -126,9 +126,8 @@ def start(message):
 
 @app.message_handler(commands=['stats'])
 def stats(message):
-    stats = Statistic(message.chat.id)
-    stats.exhume_stats()
-    app.send_message(message.chat.id, stats.message)
+    statistic_instance = Statistic(message.chat.id)
+    app.send_message(message.chat.id, statistic_instance.message)
 
 
 @app.message_handler(func=lambda message: True, content_types=['text'])
