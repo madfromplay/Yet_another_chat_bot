@@ -115,11 +115,11 @@ def about(message):
 
 
 @app.message_handler(commands=['help'])
-def help(message):
+def show_help(message):
     app.send_message(message.chat.id, "List of possible commands:\n"
-                                  "/start - Turns on message processing and statistic collection\n"
-                                  "/about - Disclamer\n"
-                                  "/stats - prints message statistic")
+                                      "/start - Turns on message processing and statistic collection\n"
+                                      "/about - Disclaimer\n"
+                                      "/stats - prints message statistic")
 
 @app.message_handler(commands=['start'])
 def start(message):
