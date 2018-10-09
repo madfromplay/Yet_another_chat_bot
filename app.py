@@ -33,10 +33,8 @@ class Statistic:
         self.stats = None
         self.exhume_stats()
 
-
-
-
-    def fix_username(self, user): # die fucktards without username!
+    @staticmethod
+    def fix_username(user): # die fucktards without username!
         try:
             user["username"] = user["username"]
         except:
