@@ -67,11 +67,16 @@ class Statistic:
 # Initial configuration
 
 config = Conf("config.ini")
-connection = MongoClient(config.db.address)
+connection = MongoClient(config.db.address,
+                         username=config.db.user,
+                         password=config.db.password,
+                         authMechanism='MONGODB-CR',
+                         authSource=config.db.name)
 db = connection[config.db.name]
 chats = db[config.db.chats]
 reminders = db[config.db.reminders]
 app = TeleBot(config.bot.token)
+
 if hasattr(config.bot, "proxy"):
     print("starting with proxy")
     apihelper.proxy = {'https': 'socks5h://'+config.bot.proxy}
@@ -92,15 +97,15 @@ def bot_polling(app):
 
 
 def create_reminder(chat_id, period, time, text):
-    reminders.insert_one(
-        {
+    data = {
             "chat_id": chat_id,
             "period": period,
             "time": time,
             "text": text
         }
-    )
 
+    reminders.insert_one(data)
+    return data
 
 def rem():
     while True:
@@ -116,7 +121,7 @@ def rem():
                 print("sending notification")
                 app.send_message(item["chat_id"], item["text"])
 
-        time.sleep(10)
+        time.sleep(60)
 
 
 def update_user(message):
@@ -177,7 +182,9 @@ def stats(message):
 def set_reminder(message):
     args = message.text.split()[1:]
     text = ' '.join(message.text.split()[3:])
-    create_reminder(message.chat.id, args[0], args[1], text)
+    reminder = create_reminder(message.chat.id, args[0], args[1], text)
+    message_body = str("new reminder setted up. "+reminder["period"]+" at "+reminder["time"]+". With text:\n"+reminder["text"])
+    app.send_message(message.chat.id, message_body)
 
 
 @app.message_handler(func=lambda message: True, content_types=['text','new_chat_participant'])
