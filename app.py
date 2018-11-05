@@ -70,8 +70,8 @@ config = Conf("config.ini")
 connection = MongoClient(config.db.address,
                          username=config.db.user,
                          password=config.db.password,
-                         authMechanism='MONGODB-CR',
-                         authSource=config.db.name)
+                         authMechanism='SCRAM-SHA-1',
+                         authSource=config.db.authdb)
 db = connection[config.db.name]
 chats = db[config.db.chats]
 reminders = db[config.db.reminders]
@@ -195,5 +195,5 @@ def common_message(message):
 if __name__ == '__main__':
     polling_thread = threading.Thread(target=bot_polling, args=(app,))
     polling_thread.start()
-    reminder_thread = threading.Thread(target=rem)
-    reminder_thread.start()
+    #reminder_thread = threading.Thread(target=rem)
+    #reminder_thread.start()
