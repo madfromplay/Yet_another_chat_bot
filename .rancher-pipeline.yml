@@ -1,0 +1,7 @@
+stages:
+- name: DockerBuild
+  steps:
+  - runScriptConfig:
+      image: python:latest
+      shellScript: docker build -t madfromplay/bot .
+timeout: 60
